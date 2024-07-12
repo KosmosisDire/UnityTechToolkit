@@ -5,7 +5,9 @@
   "description": "A toolkit for creating more technical projects in Unity.",
   "unity": "2023.1",
   "dependencies": {
-    "com.unity.ugui": "2.0.0"
+    "com.unity.ugui": "2.0.0",
+    "com.unity.render-pipelines.universal": "17.0.3",
+    "com.unity.inputsystem": "1.8.1"
   },
   "author": {
     "name": "Nathan George",
