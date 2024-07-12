@@ -1,0 +1,173 @@
+*
+{
+    color: var(--text-color);
+}
+
+.unity-base-field
+{
+    align-items: center;
+}
+
+.unity-base-field__label
+{
+    font-size: 18px;
+}
+
+#ros-connector
+{
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-color);
+}
+
+.panel
+{
+    background-color: var(--surface-color);
+    border-radius: var(--small-radius);
+    padding: var(--small-padding) var(--medium-padding);
+}
+
+.notification-panel
+{
+    margin: 1px 0;
+}
+
+.unity-button, 
+.unity-base-field__input
+{
+    background-color: var(--button-color);
+    border-radius: var(--small-radius);
+    border-color: var(--border-color);
+}
+
+.unity-button:hover, .unity-base-field__input:hover
+{
+    border-color: var(--border-color-hover);
+}
+
+.unity-button:hover,
+{
+    background-color: var(--button-color-hover);
+}
+
+.unity-button__image
+{
+    -unity-background-image-tint-color: var(--text-color);
+    --unity-image-tint-color: var(--text-color);
+}
+
+.button-text-icon .unity-button__image
+{
+    width: 16px;
+    height: 16px;
+    margin-right: 12px;
+}
+
+.toolbar
+{
+    flex-direction: row;
+    transition: opacity 0.15s;
+    height: 32px;
+}
+
+.toolbar .toolbar-item.icon-only
+{
+    width: 26px;
+    height: 26px;
+    margin: 2px;
+    padding: 5px;
+}
+
+#root.dark-theme
+{
+    --base-0: rgb(16, 15, 15);
+    --base-5: rgb(17, 16, 16);
+    --base-10: rgb(28, 27, 26);
+    --base-15: rgb(29, 28, 27);
+    --base-20: rgb(30, 29, 28);
+    --base-30: rgb(40, 39, 38);
+    --base-40: rgb(52, 51, 49);
+    --base-50: rgb(87, 86, 83);
+    --base-60: rgb(111, 110, 105);
+    --base-70: rgb(135, 133, 128);
+    --base-80: rgb(145, 143, 138);
+    --base-90: rgb(155, 153, 148);
+    --base-100: rgb(206, 205, 195);
+
+    --accent-color: rgb(21, 79, 75);
+    --accent-color-bright: rgb(36, 131, 123);
+    --accent-color-muted: rgba(36, 131, 123, 0.3);
+
+    --background-color: var(--base-15);
+    --surface-color: var(--base-0);
+    --surface-color-alt: var(--base-10);
+    --surface-color-secondary: var(--base-30);
+    --surface-color-secondary-alt: var(--base-20);
+
+    --border-color: var(--base-40);
+    --border-color-hover: var(--accent-color-muted);
+
+    --text-color: var(--base-100);
+    --text-color-secondary: var(--base-70);
+    --light-text-color: var(--base-100);
+    --dark-text-color: var(--base-0);
+
+    --button-color: var(--surface-color-secondary);
+    --button-color-hover: var(--accent-color);
+}
+
+#root.light-theme
+{
+    --base-0: rgb(255, 252, 240);
+    --base-5: rgb(255, 252, 240);
+    --base-10: rgb(242, 240, 229);
+    --base-15: rgb(242, 240, 229);
+    --base-20: rgb(230, 228, 217);
+    --base-30: rgb(230, 228, 217);
+    --base-40: rgb(218, 216, 206);
+    --base-50: rgb(218, 216, 206);
+    --base-60: rgb(206, 205, 195);
+    --base-70: rgb(183, 181, 172);
+    --base-80: rgb(135, 133, 128);
+    --base-90: rgb(111, 110, 105);
+    --base-100: rgb(16, 15, 15);
+
+    --accent-color: rgb(65, 138, 132);
+    --accent-color-bright: rgb(166, 211, 207);
+    --accent-color-muted: rgba(166, 211, 207, 0.3);
+
+    --background-color: var(--base-15);
+    --surface-color: var(--base-0);
+    --surface-color-alt: var(--base-10);
+    --surface-color-secondary: var(--base-15);
+    --surface-color-secondary-alt: var(--base-20);
+
+    --border-color: --accent-color-muted;
+    --border-color-hover: var(--accent-color);
+
+    --text-color: var(--base-100);
+    --text-color-secondary: var(--base-70);
+    --light-text-color: var(--base-0);
+    --dark-text-color: var(--base-100);
+
+    --button-color: var(--surface-color-secondary);
+    --button-color-hover: var(--accent-color);
+}
+
+
+
+#root
+{
+    --large-radius: 12px;
+    --medium-radius: 8px;
+    --small-radius: 4px;
+
+    --large-padding: 16px;
+    --medium-padding: 8px;
+    --small-padding: 4px;
+
+    --large-margin: 16px;
+    --medium-margin: 8px;
+    --small-margin: 4px;
+
+}

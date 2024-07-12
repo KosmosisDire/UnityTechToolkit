@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Project/General%20UI/UPS.uss?fileID=7433441132597879392&amp;guid=34db886ff6e2ad14692abc7540374429&amp;type=3#UPS" />
+    <ui:VisualElement name="toolbar-container">
+        <ui:Button icon-image="project://database/Assets/Project/General%20UI/Icons/play.svg?fileID=7388822144124034973&amp;guid=ee68c8d23de1b84488767b5875fd7dac&amp;type=3#play" />
+        <ui:Button icon-image="project://database/Assets/Project/General%20UI/Icons/save.svg?fileID=7388822144124034973&amp;guid=32fa52b39e7894b4a948fedbeef032dd&amp;type=3#save" />
+        <ui:Button icon-image="project://database/Assets/Project/General%20UI/Icons/globe.svg?fileID=7388822144124034973&amp;guid=70dea6efa8c98ea499781580578d5d47&amp;type=3#globe" />
+    </ui:VisualElement>
+</ui:UXML>

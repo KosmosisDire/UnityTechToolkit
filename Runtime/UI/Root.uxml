@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/Project/General%20UI/UPS.uss?fileID=7433441132597879392&amp;guid=34db886ff6e2ad14692abc7540374429&amp;type=3#UPS" />
+    <ui:VisualElement name="root" picking-mode="Ignore" class="dark-theme" style="flex-grow: 1;" />
+</ui:UXML>
