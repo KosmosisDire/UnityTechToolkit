@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace SimToolkit
+namespace Toolkit
 {
 
 public static class UnityTypeExtensions

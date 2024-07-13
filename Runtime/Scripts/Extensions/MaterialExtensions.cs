@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace SimToolkit
+namespace Toolkit
 {
 
 // taken from https://github.com/Unity-Technologies/URDF-Importer/blob/90f353e4352aae4df52fa2c05e49b804631d2a63/com.unity.robotics.urdf-importer/Runtime/Extensions/MaterialExtensions.cs

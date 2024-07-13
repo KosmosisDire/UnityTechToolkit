@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Visualization.Internal
+namespace Toolkit.Visualization.Internal
 {
 	public class Pool<T>
 	{

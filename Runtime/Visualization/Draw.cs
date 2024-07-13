@@ -1,12 +1,9 @@
 using UnityEngine;
-using Toolkit.MeshGeneration;
-using UnityEngine;
-using Visualization.Internal;
+using Toolkit.Visualization.Internal;
 using Toolkit.MeshGeneration;
 
-namespace Visualization
+namespace Toolkit.Visualization
 {
-    
 
     // TODO: most draw functions don't support instancing. Should probably fix that at some point...
     public static class Draw

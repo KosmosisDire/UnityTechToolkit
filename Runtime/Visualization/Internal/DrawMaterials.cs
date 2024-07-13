@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Visualization.Internal
+namespace Toolkit.Visualization.Internal
 {
 	public static class DrawMaterials
 	{

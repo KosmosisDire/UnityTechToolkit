@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
 using UnityEngine;
-namespace SimToolkit
+
+namespace Toolkit
 {
 
 public static class UnityObjectExtentions

@@ -3,9 +3,8 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Rendering.RenderGraphModule;
 using System.Collections.Generic;
-using UnityEditor;
 
-namespace Visualization.Internal
+namespace Toolkit.Visualization.Internal
 {
 
     internal class VisualizationRenderFeature : ScriptableRendererFeature

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace SimToolkit
+namespace Toolkit
 {
 
 

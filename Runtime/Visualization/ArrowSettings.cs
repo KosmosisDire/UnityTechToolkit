@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Visualization
+namespace Toolkit.Visualization
 {
     public struct ArrowSettings
 	{

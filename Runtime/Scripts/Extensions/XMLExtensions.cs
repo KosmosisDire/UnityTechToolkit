@@ -2,7 +2,8 @@
 
 using System.Xml;
 using UnityEngine;
-
+namespace Toolkit
+{
 public static class XMLExtennsions
 {
     public static double GetDouble(this XmlNode node, string name, double defaultValue = 0)
@@ -73,4 +74,5 @@ public static class XMLExtennsions
             float.Parse(values[2])
         );
     }
+}
 }

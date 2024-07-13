@@ -2,10 +2,8 @@ using System;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-
-namespace SimToolkit
+namespace Toolkit
 {
-
 public static class GenericExtensions
 {
     public static float ParseFloatOrDefault(this string str, float defaultValue)
@@ -38,5 +36,4 @@ public static class GenericExtensions
         }
     }
 }
-
 }
