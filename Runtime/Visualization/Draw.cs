@@ -30,7 +30,7 @@ namespace Toolkit.Visualization
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
 			materialProperties.SetColor(DrawMaterials.colorID, col);
 			Matrix4x4 matrix = Matrix4x4.TRS(center, Quaternion.identity, new Vector3(size.x, size.y, 1));
-            		VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), matrix, DrawMaterials.unlitMat, materialProperties);
+            VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), matrix, DrawMaterials.unlitMat, materialProperties);
 		}
 
 		public static void Quad(Vector2 a, Vector2 b, Vector2 c, Vector2 d, Color col)
@@ -43,7 +43,7 @@ namespace Toolkit.Visualization
 			materialProperties.SetVector(DrawMaterials.quadPointB, b);
 			materialProperties.SetVector(DrawMaterials.quadPointC, c);
 			materialProperties.SetVector(DrawMaterials.quadPointD, d);
-            		VisualizationRenderFeature.DrawMesh(mesh, Matrix4x4.identity, DrawMaterials.quadMat, materialProperties);
+            VisualizationRenderFeature.DrawMesh(mesh, Matrix4x4.identity, DrawMaterials.quadMat, materialProperties);
 		}
 
 		public static void Mesh(Mesh mesh, Color col)
@@ -57,14 +57,14 @@ namespace Toolkit.Visualization
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
 			materialProperties.SetColor(DrawMaterials.colorID, col);
 			Matrix4x4 matrix = Matrix4x4.TRS(pos, rot, scale);
-            		VisualizationRenderFeature.DrawMesh(mesh, matrix, DrawMaterials.unlitMat, materialProperties);
+            VisualizationRenderFeature.DrawMesh(mesh, matrix, DrawMaterials.unlitMat, materialProperties);
 		}
 
-	    	public static void Mesh(Mesh mesh, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
+	    public static void Mesh(Mesh mesh, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
 		{
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
 			Matrix4x4 matrix = Matrix4x4.TRS(pos, rot, scale);
-            		VisualizationRenderFeature.DrawMesh(mesh, matrix, mat, materialProperties);
+            VisualizationRenderFeature.DrawMesh(mesh, matrix, mat, materialProperties);
 		}
 
 		public static void Arrow(Vector3 start, Vector3 end, ArrowSettings settings, float t = 1)
@@ -159,7 +159,7 @@ namespace Toolkit.Visualization
 			Quaternion rot = Quaternion.FromToRotation(Vector3.left, start - end);
 
 			Matrix4x4 matrix = Matrix4x4.TRS(center, rot, scale);
-            		VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), matrix, DrawMaterials.lineMat, materialProperties);
+            VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), matrix, DrawMaterials.lineMat, materialProperties);
 		}
 
 
@@ -169,7 +169,7 @@ namespace Toolkit.Visualization
 		}
 
 
-        	public static void RayDirection(Vector3 start, Vector3 direction, float length, float thickness, Color col)
+        public static void RayDirection(Vector3 start, Vector3 direction, float length, float thickness, Color col)
 		{
 			Line(start, start + direction.normalized * length, thickness, col);
 		}
@@ -253,7 +253,7 @@ namespace Toolkit.Visualization
 			Mesh quadMesh = QuadMeshGenerator.GetQuadMesh();
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
 			materialProperties.SetColor(DrawMaterials.colorID, col);
-            		VisualizationRenderFeature.DrawMesh(quadMesh, matrix, DrawMaterials.pointMat, materialProperties);
+            VisualizationRenderFeature.DrawMesh(quadMesh, matrix, DrawMaterials.pointMat, materialProperties);
 		}
 
 		public static void Sphere(Vector3 center, float radius, Color col, bool unlit = false)
@@ -261,15 +261,15 @@ namespace Toolkit.Visualization
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
 			materialProperties.SetColor(DrawMaterials.colorID, col);
 			Matrix4x4 matrix = Matrix4x4.TRS(center, Quaternion.identity, Vector3.one * radius);
-	           	VisualizationRenderFeature.DrawMesh(SphereMeshGenerator.GetMesh(), matrix, unlit ? DrawMaterials.unlitMat : DrawMaterials.shadedMat, materialProperties);
-	        }
+	        VisualizationRenderFeature.DrawMesh(SphereMeshGenerator.GetMesh(), matrix, unlit ? DrawMaterials.unlitMat : DrawMaterials.shadedMat, materialProperties);
+	    }
 
 		public static void Cube(Vector3 center, Quaternion rotation, Vector3 scale, Color col)
 		{
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
 			materialProperties.SetColor(DrawMaterials.colorID, col);
 			Matrix4x4 matrix = Matrix4x4.TRS(center, rotation, scale);
-            		VisualizationRenderFeature.DrawMesh(CubeMeshGenerator.GetIdentityMesh(), matrix, DrawMaterials.unlitMat, materialProperties);
+            VisualizationRenderFeature.DrawMesh(CubeMeshGenerator.GetIdentityMesh(), matrix, DrawMaterials.unlitMat, materialProperties);
 		}
 
 	}

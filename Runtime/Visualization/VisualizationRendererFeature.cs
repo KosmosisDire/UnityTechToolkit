@@ -15,6 +15,7 @@ namespace Toolkit.Visualization.Internal
         private static Queue<Matrix4x4> meshTransforms = new Queue<Matrix4x4>();
         private static Pool<Mesh> meshPool = new();
         private static Pool<MaterialPropertyBlock> propPool = new();
+        public RenderPassEvent passEvent;
 
         public static MaterialPropertyBlock GetNewMaterialProperties()
         {
@@ -42,7 +43,7 @@ namespace Toolkit.Visualization.Internal
         {
             DrawMaterials.Init();
             drawObjectsPass = new DrawVisPass();
-            drawObjectsPass.renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+            drawObjectsPass.renderPassEvent = passEvent;
         }
     
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
