@@ -59,7 +59,7 @@ namespace Toolkit.Visualization
 			Matrix4x4 matrix = Matrix4x4.TRS(pos, rot, scale);
             VisualizationRenderFeature.DrawMesh(mesh, matrix, DrawMaterials.unlitMat, materialProperties);
 		}
-
+		
 	    public static void Mesh(Mesh mesh, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
 		{
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
@@ -130,8 +130,8 @@ namespace Toolkit.Visualization
 			Quaternion rot = Quaternion.FromToRotation(Vector3.left, start - end);
 
 			Matrix4x4 matrix = Matrix4x4.TRS(center, rot, scale);
-            		VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), matrix, DrawMaterials.lineMatRoundedEdge, materialProperties);
-        	}
+            VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), matrix, DrawMaterials.lineMatRoundedEdge, materialProperties);
+        }
 
 		public static void LinePixel(Vector3 start, Vector3 end, Color col, float t = 1)
 		{
@@ -224,6 +224,14 @@ namespace Toolkit.Visualization
 			}
 		}
 
+		public static void PathPixel(Vector3[] points, Color col)
+		{
+			for (int i = 0; i < points.Length - 1; i++)
+			{
+				LinePixel(points[i], points[i + 1], col);
+			}
+		}
+
 		public static void BoxOutline(Vector2 center, Vector2 size, float thickness, Color col, float t = 1)
 		{
 			Vector3[] path =
@@ -234,6 +242,34 @@ namespace Toolkit.Visualization
 				center + new Vector2(-size.x,-size.y) * 0.5f
 			};
 			Draw.Path(path, thickness, true, col, t);
+		}
+
+		public static void Bounds(Bounds bounds, Color col)
+		{
+			Vector3[] pathTop = 
+			{
+				new Vector3(bounds.min.x, bounds.min.y, bounds.max.z),
+				new Vector3(bounds.max.x, bounds.min.y, bounds.max.z),
+				new Vector3(bounds.max.x, bounds.min.y, bounds.min.z),
+				new Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
+				new Vector3(bounds.min.x, bounds.min.y, bounds.max.z)
+			};
+			Vector3[] pathBottom = 
+			{
+				new Vector3(bounds.min.x, bounds.max.y, bounds.max.z),
+				new Vector3(bounds.max.x, bounds.max.y, bounds.max.z),
+				new Vector3(bounds.max.x, bounds.max.y, bounds.min.z),
+				new Vector3(bounds.min.x, bounds.max.y, bounds.min.z),
+				new Vector3(bounds.min.x, bounds.max.y, bounds.max.z)
+			};
+
+			Draw.PathPixel(pathTop, col);
+			Draw.PathPixel(pathBottom, col);
+
+			Draw.LinePixel(pathTop[0], pathBottom[0], col);
+			Draw.LinePixel(pathTop[1], pathBottom[1], col);
+			Draw.LinePixel(pathTop[2], pathBottom[2], col);
+			Draw.LinePixel(pathTop[3], pathBottom[3], col);
 		}
 
 		// Draw a 2D point
@@ -261,8 +297,8 @@ namespace Toolkit.Visualization
 			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
 			materialProperties.SetColor(DrawMaterials.colorID, col);
 			Matrix4x4 matrix = Matrix4x4.TRS(center, Quaternion.identity, Vector3.one * radius);
-	        VisualizationRenderFeature.DrawMesh(SphereMeshGenerator.GetMesh(), matrix, unlit ? DrawMaterials.unlitMat : DrawMaterials.shadedMat, materialProperties);
-	    }
+            VisualizationRenderFeature.DrawMesh(SphereMeshGenerator.GetMesh(), matrix, unlit ? DrawMaterials.unlitMat : DrawMaterials.shadedMat, materialProperties);
+        }
 
 		public static void Cube(Vector3 center, Quaternion rotation, Vector3 scale, Color col)
 		{

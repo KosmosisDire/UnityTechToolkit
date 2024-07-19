@@ -123,12 +123,23 @@ namespace Toolkit
 
         public async Task Hide(float duration = 0.5f)
         {
+            container.pickingMode = PickingMode.Ignore;
+            for (int i = 0; i < items.Count; i++)
+            {
+                items[i].buttonEl.pickingMode = PickingMode.Ignore;
+            }
+
             await container.FadeOut(duration);
         }
         
         public async Task Show(float duration = 0.5f)
         {
             await container.FadeIn(duration);
+            container.pickingMode = PickingMode.Position;
+            for (int i = 0; i < items.Count; i++)
+            {
+                items[i].buttonEl.pickingMode = PickingMode.Position;
+            }
         }
 
         public async void Delete()
