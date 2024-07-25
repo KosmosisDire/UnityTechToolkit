@@ -56,6 +56,12 @@
     --unity-image-tint-color: var(--text-color);
 }
 
+.unity-button.selected
+{
+    background-color: var(--accent-color-muted);
+    border-color: var(--accent-color-bright);
+}
+
 .button-text-icon .unity-button__image
 {
     width: 16px;
@@ -96,7 +102,7 @@
 
     --accent-color: rgb(21, 79, 75);
     --accent-color-bright: rgb(36, 131, 123);
-    --accent-color-muted: rgba(36, 131, 123, 0.3);
+    --accent-color-muted: rgba(59, 116, 111, 0.3);
 
     --background-color: var(--base-15);
     --surface-color: var(--base-0);
