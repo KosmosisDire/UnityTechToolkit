@@ -18,6 +18,8 @@ namespace Toolkit.MeshGeneration
         private Mesh lastMesh;
         private PlaneShapeData lastPlaneData;
         public PlaneShapeData planeData;
+        public float outlineOffset = 0;
+        private float lastOutlineOffset;
 
 
         public Mesh LastMesh => lastMesh;
@@ -43,11 +45,12 @@ namespace Toolkit.MeshGeneration
             if (!meshFilter || !meshRenderer)
                 return;
 
-            if (lastMesh == null || lastPlaneData != planeData)
+            if (lastMesh == null || lastPlaneData != planeData || lastOutlineOffset != outlineOffset)
             {
                 lastMesh = PlaneMeshGenerator.Generate(planeData);
                 meshFilter.sharedMesh = lastMesh;
                 lastPlaneData = planeData;
+                lastOutlineOffset = outlineOffset;
 
                 if (lineRenderer)
                 {
@@ -55,14 +58,17 @@ namespace Toolkit.MeshGeneration
                     lineRenderer.loop = true;
                     lineRendererLocalWidth.widthMultiplier = planeData.outlineWidth;
                     lineRenderer.useWorldSpace = false;
+                    
+                    var plane = new Plane();
+                    plane.Set3Points(lastMesh.vertices[0], lastMesh.vertices[1], lastMesh.vertices[2]);
 
                     // use plane vertices to draw outline
                     lineRenderer.SetPositions(new Vector3[]
                     {
-                        lastMesh.vertices[0],
-                        lastMesh.vertices[1],
-                        lastMesh.vertices[2],
-                        lastMesh.vertices[3],
+                        lastMesh.vertices[0] + plane.normal * outlineOffset,
+                        lastMesh.vertices[1] + plane.normal * outlineOffset,
+                        lastMesh.vertices[2] + plane.normal * outlineOffset,
+                        lastMesh.vertices[3] + plane.normal * outlineOffset,
                     });
                 }
             }
