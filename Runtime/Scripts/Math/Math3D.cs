@@ -716,4 +716,40 @@ public class Math3d : MonoBehaviour {
         z *= lengthD;
         return new Quaternion(x, y, z, w);
     }
+
+    public static bool RayIntersectsSphere(Vector3 rayOrigin, Vector3 rayDirection, Vector3 sphereCenter, float sphereRadius, out float distance)
+    {
+        distance = 0.0f;
+        
+        Vector3 m = rayOrigin - sphereCenter;
+        float b = Vector3.Dot(m, rayDirection);
+        float c = Vector3.Dot(m, m) - sphereRadius * sphereRadius;
+        
+        // Exit if r’s origin outside s (c > 0) and r pointing away from s (b > 0)
+        if (c > 0.0f && b > 0.0f) {
+            return false;
+        }
+        
+        float discr = b * b - c;
+        
+        // A negative discriminant corresponds to ray missing sphere
+        if (discr < 0.0f) {
+            return false;
+        }
+        
+        // Ray now found to intersect sphere, compute smallest t value of intersection
+        distance = -b - Mathf.Sqrt(discr);
+        
+        // If t is negative, ray started inside sphere so clamp t to zero
+        if (distance < 0.0f) {
+            distance = 0.0f;
+        }
+        
+        return true;
+    }
+
+    public static Ray MouseRay()
+    {
+        return Camera.main.ScreenPointToRay(Input.mousePosition);
+    }
 }
