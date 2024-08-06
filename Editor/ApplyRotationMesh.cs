@@ -11,13 +11,26 @@ public class ApplyRotationMesh : EditorWindow
     {
         foreach (var obj in Selection.gameObjects)
         {
-            var meshFilter = obj.GetComponent<MeshFilter>();
-            if (meshFilter)
+            var meshFilters = obj.GetComponentsInChildren<MeshFilter>();
+            foreach (var meshFilter in meshFilters)
             {
                 Undo.RecordObject(obj, "Apply Rotation");
-                meshFilter.sharedMesh = Instantiate(meshFilter.sharedMesh);
+
+                
+                var oldMesh = meshFilter.sharedMesh;
+
+                if (!oldMesh.name.EndsWith("(Clone)"))
+                {
+                    meshFilter.sharedMesh = Instantiate(oldMesh);
+                }
                 meshFilter.sharedMesh = ApplyRotation(meshFilter.sharedMesh, obj.transform.rotation);
                 obj.transform.rotation = Quaternion.identity;
+
+                var meshCollider = meshFilter.GetComponent<MeshCollider>();
+                if (meshCollider != null && meshCollider.sharedMesh == oldMesh)
+                {
+                    meshCollider.sharedMesh = meshFilter.sharedMesh;
+                }
             }
         }
     }
