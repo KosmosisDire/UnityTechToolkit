@@ -71,6 +71,11 @@ namespace Toolkit.MeshGeneration
             return obj is PlaneShapeData other && Equals(other);
         }
 
+        public override readonly int GetHashCode()
+        {
+            return HashCode.Combine(width, length, offset, rotation, scale, outlineWidth);
+        }
+
         public static bool operator ==(PlaneShapeData left, PlaneShapeData right)
         {
             return left.Equals(right);
