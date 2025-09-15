@@ -4,10 +4,22 @@ namespace Toolkit.MeshGeneration
 {
     public static class ConeMeshGenerator
     {
+        private static Mesh _unitConeMesh;
+
         public static Mesh Generate(ConeShapeData data)
         {
             var mesh = CylinderMeshGenerator.Generate(data.height, data.radius, 0, data.offset, data.rotation, data.scale);
             return mesh;
+        }
+
+        public static Mesh GetIdentityMesh()
+        {
+            if (_unitConeMesh == null)
+            {
+                _unitConeMesh = CylinderMeshGenerator.Generate(1f, 1f, 0f);
+                _unitConeMesh.name = "Unit Cone";
+            }
+            return _unitConeMesh;
         }
     }
 

@@ -6,6 +6,18 @@ namespace Toolkit.MeshGeneration
 {
     public static class CylinderMeshGenerator
     {
+        private static Mesh _unitCylinderMesh;
+
+        public static Mesh GetIdentityMesh()
+        {
+            if (_unitCylinderMesh == null)
+            {
+                _unitCylinderMesh = Generate(1f, 1f, 1f);
+                _unitCylinderMesh.name = "Unit Cylinder";
+            }
+            return _unitCylinderMesh;
+        }
+
         public static Mesh Generate(float height, float bottomRadius, float topRadius, Vector3 offset = default, Quaternion rotation = default, Vector3 scale = default)
         {
             int nbSides = 30;

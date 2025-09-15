@@ -17,7 +17,7 @@ namespace Toolkit.MeshGeneration
 		static readonly Vector3[] baseVertices = { Vector3.up, Vector3.left, Vector3.back, Vector3.right, Vector3.forward, Vector3.down };
 
 
-		public static Mesh GetMesh()
+		public static Mesh GetIdentityMesh()
 		{
 			if (cachedMesh == null)
 			{
