@@ -1,674 +1,511 @@
 using UnityEngine;
-using Toolkit.Visualization.Internal;
-using Toolkit.MeshGeneration;
+using System.Collections.Generic;
 
-namespace Toolkit.Visualization
+[ExecuteAlways]
+public class Draw : MonoBehaviour
 {
-	public static class Draw
-	{
-		private static MaterialPropertyBlock materialProperties;
-
-		#region Core Drawing Functions with Matrix4x4
-
-		public static void Sphere(Matrix4x4 transform, SphereSettings settings)
-		{
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawSphereFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawSphereOutline(transform, settings);
-					break;
-			}
-		}
-
-		public static void Box(Matrix4x4 transform, BoxSettings settings)
-		{
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawBoxFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawBoxOutline(transform, settings);
-					break;
-			}
-		}
-
-		public static void Cylinder(Matrix4x4 transform, CylinderSettings settings)
-		{
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawCylinderFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawCylinderOutline(transform, settings);
-					break;
-			}
-		}
-
-		public static void Cone(Matrix4x4 transform, ConeSettings settings)
-		{
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawConeFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawConeOutline(transform, settings);
-					break;
-			}
-		}
-
-		public static void Triangle(Matrix4x4 transform, TriangleSettings settings)
-		{
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawTriangleFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawTriangleOutline(transform, settings);
-					break;
-			}
-		}
-
-		public static void Quad(Matrix4x4 transform, QuadSettings settings)
-		{
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawQuadFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawQuadOutline(transform, settings);
-					break;
-			}
-		}
-
-		public static void Circle(Matrix4x4 transform, CircleSettings settings)
-		{
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawCircleFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawCircleOutline(transform, settings);
-					break;
-			}
-		}
-
-		public static void Polygon(Matrix4x4 transform, PolygonSettings settings)
-		{
-			if (settings.vertices.Length < 3) return;
-
-			switch (settings.baseSettings.drawMode)
-			{
-				case DrawMode.Filled:
-					DrawPolygonFilled(transform, settings);
-					break;
-				case DrawMode.Outline:
-				case DrawMode.PixelOutline:
-					DrawPolygonOutline(transform, settings);
-					break;
-			}
-		}
-
-		#endregion
-
-		#region Line Drawing
-
-		public static void Line(Matrix4x4 transform, LineSettings settings)
-		{
-			if (settings.baseSettings.drawMode == DrawMode.Filled || settings.baseSettings.drawMode == DrawMode.Outline)
-			{
-				DrawLineThick(transform, settings);
-			}
-			else
-			{
-				DrawLinePixel(transform, settings);
-			}
-		}
-
-		public static void Line(Vector3 start, Vector3 end, LineSettings settings)
-		{
-			Vector3 actualEnd = Vector3.Lerp(start, end, settings.baseSettings.t);
-			if ((start - actualEnd).sqrMagnitude < float.Epsilon) return;
-
-			Vector3 center = (start + actualEnd) * 0.5f;
-			Vector3 direction = actualEnd - start;
-			float length = direction.magnitude;
-			Quaternion rotation = Quaternion.FromToRotation(Vector3.right, direction);
-
-			Matrix4x4 transform = Matrix4x4.TRS(center, rotation, new Vector3(length, 1, 1));
-			Line(transform, settings);
-		}
-
-		public static void Path(Vector3[] points, PathSettings settings)
-		{
-			if (points.Length < 2 || settings.baseSettings.t <= 0) return;
-
-			float totalLength = 0;
-			for (int i = 0; i < points.Length - 1; i++)
-				totalLength += Vector3.Distance(points[i], points[i + 1]);
-			if (settings.closed && points.Length > 2)
-				totalLength += Vector3.Distance(points[points.Length - 1], points[0]);
-
-			float drawLength = totalLength * settings.baseSettings.t;
-			float lengthDrawn = 0;
-
-			int limit = settings.closed ? points.Length : points.Length - 1;
-			for (int i = 0; i < limit; i++)
-			{
-				int nextIndex = (i + 1) % points.Length;
-				float segLength = Vector3.Distance(points[i], points[nextIndex]);
-
-				if (lengthDrawn + segLength > drawLength)
-				{
-					segLength = drawLength - lengthDrawn;
-					Vector3 endPoint = points[i] + (points[nextIndex] - points[i]).normalized * segLength;
-
-					LineSettings _lineSettings = new LineSettings
-					{
-						baseSettings = settings.baseSettings,
-						roundedCaps = settings.roundedJoints,
-					};
-					Line(points[i], endPoint, _lineSettings);
-					break;
-				}
-
-				LineSettings lineSettings = new LineSettings
-				{
-					baseSettings = settings.baseSettings,
-					roundedCaps = settings.roundedJoints,
-				};
-				Line(points[i], points[nextIndex], lineSettings);
-				lengthDrawn += segLength;
-			}
-		}
-
-		public static void Arrow(Vector3 start, Vector3 end, ArrowSettings settings)
-		{
-			Vector3 actualEnd = Vector3.Lerp(start, end, settings.baseSettings.t);
-			if ((start - actualEnd).sqrMagnitude < float.Epsilon) return;
-
-			Vector3 dir = (actualEnd - start).normalized;
-			Vector3 up = Mathf.Abs(Vector3.Dot(dir, Vector3.up)) > 0.9f ? Vector3.right : Vector3.up;
-
-			float v = Mathf.Cos(settings.headAngleDegrees * Mathf.Deg2Rad) * settings.headLength;
-			Vector3 shaftEnd = actualEnd - dir * Mathf.Min((actualEnd - start).magnitude, v);
-			CylinderSettings cylinderSettings = CylinderSettings.Default;
-			cylinderSettings.baseSettings = settings.baseSettings;
-			cylinderSettings.radius = settings.baseSettings.lineThickness * 0.5f;
-			cylinderSettings.segments = 12;
-			Cylinder(start, shaftEnd, cylinderSettings);
-
-			// Draw filled cone head
-			float coneRadius = Mathf.Tan(settings.headAngleDegrees * Mathf.Deg2Rad) * settings.headLength;
-			Vector3 coneCenter = actualEnd - dir * settings.headLength * 0.5f;
-			Quaternion rotation = Quaternion.FromToRotation(Vector3.up, dir);
-			Matrix4x4 coneTransform = Matrix4x4.TRS(coneCenter, rotation, new Vector3(coneRadius, settings.headLength, coneRadius));
-
-			ConeSettings coneSettings = ConeSettings.Default;
-			coneSettings.baseSettings = settings.baseSettings;
-			Cone(coneTransform, coneSettings);
-		}
-
-		#endregion
-
-		#region Private Implementation Methods
-
-		private static void DrawSphereFilled(Matrix4x4 transform, SphereSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			Material mat = settings.baseSettings.lit ? DrawMaterials.shadedMat : DrawMaterials.unlitMat;
-			transform *= Matrix4x4.Scale(2 * settings.radius * Vector3.one);
-			VisualizationRenderFeature.DrawMesh(SphereMeshGenerator.GetIdentityMesh(), transform, mat, materialProperties);
-		}
-
-		private static void DrawSphereOutline(Matrix4x4 transform, SphereSettings settings)
-		{
-			// Extract position and radius from transform
-			Vector3 center = transform.GetColumn(3);
-			float radius = transform.lossyScale.x * settings.radius;
-
-			// Draw three circles for wireframe sphere
-			int segments = settings.segments;
-			Vector3[] pointsXY = new Vector3[segments];
-			Vector3[] pointsXZ = new Vector3[segments];
-			Vector3[] pointsYZ = new Vector3[segments];
-
-			for (int i = 0; i < segments; i++)
-			{
-				float angle = i * Mathf.PI * 2 / segments;
-				float cos = Mathf.Cos(angle);
-				float sin = Mathf.Sin(angle);
-
-				pointsXY[i] = center + new Vector3(cos * radius, sin * radius, 0);
-				pointsXZ[i] = center + new Vector3(cos * radius, 0, sin * radius);
-				pointsYZ[i] = center + new Vector3(0, cos * radius, sin * radius);
-			}
-
-			PathSettings pathSettings = new PathSettings
-			{
-				baseSettings = settings.baseSettings,
-				closed = true,
-			};
-
-			Path(pointsXY, pathSettings);
-			Path(pointsXZ, pathSettings);
-			Path(pointsYZ, pathSettings);
-		}
-
-		private static void DrawBoxFilled(Matrix4x4 transform, BoxSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			VisualizationRenderFeature.DrawMesh(CubeMeshGenerator.GetIdentityMesh(), transform, DrawMaterials.unlitMat, materialProperties);
-		}
-
-		private static void DrawBoxOutline(Matrix4x4 transform, BoxSettings settings)
-		{
-			// Extract corners from transform
-			Vector3 center = transform.GetColumn(3);
-			Vector3 halfSize = transform.lossyScale * 0.5f;
-			Quaternion rotation = transform.rotation;
-
-			Vector3[] localCorners = new Vector3[]
-			{
-				new (-halfSize.x, -halfSize.y, -halfSize.z),
-				new ( halfSize.x, -halfSize.y, -halfSize.z),
-				new ( halfSize.x, -halfSize.y,  halfSize.z),
-				new (-halfSize.x, -halfSize.y,  halfSize.z),
-				new (-halfSize.x,  halfSize.y, -halfSize.z),
-				new ( halfSize.x,  halfSize.y, -halfSize.z),
-				new ( halfSize.x,  halfSize.y,  halfSize.z),
-				new (-halfSize.x,  halfSize.y,  halfSize.z)
-			};
-
-			Vector3[] corners = new Vector3[8];
-			for (int i = 0; i < 8; i++)
-			{
-				corners[i] = center + rotation * localCorners[i];
-			}
-
-			LineSettings lineSettings = new LineSettings
-			{
-				baseSettings = settings.baseSettings,
-			};
-
-			// Bottom face
-			Line(corners[0], corners[1], lineSettings);
-			Line(corners[1], corners[2], lineSettings);
-			Line(corners[2], corners[3], lineSettings);
-			Line(corners[3], corners[0], lineSettings);
-
-			// Top face
-			Line(corners[4], corners[5], lineSettings);
-			Line(corners[5], corners[6], lineSettings);
-			Line(corners[6], corners[7], lineSettings);
-			Line(corners[7], corners[4], lineSettings);
-
-			// Vertical edges
-			Line(corners[0], corners[4], lineSettings);
-			Line(corners[1], corners[5], lineSettings);
-			Line(corners[2], corners[6], lineSettings);
-			Line(corners[3], corners[7], lineSettings);
-		}
-
-		private static void DrawCylinderFilled(Matrix4x4 transform, CylinderSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			var mat = settings.baseSettings.lit ? DrawMaterials.shadedMat : DrawMaterials.unlitMat;
-			VisualizationRenderFeature.DrawMesh(CylinderMeshGenerator.GetIdentityMesh(), transform, mat, materialProperties);
-		}
-
-		private static void DrawCylinderOutline(Matrix4x4 transform, CylinderSettings settings)
-		{
-			Vector3 center = transform.GetColumn(3);
-			Vector3 up = transform.GetColumn(1).normalized;
-			float radius = transform.lossyScale.x * settings.radius;
-			float height = transform.lossyScale.y * settings.height;
-
-			// Top and bottom circles
-			Vector3 topCenter = center + up * (height * 0.5f);
-			Vector3 bottomCenter = center - up * (height * 0.5f);
-
-			Vector3[] topCircle = new Vector3[settings.segments];
-			Vector3[] bottomCircle = new Vector3[settings.segments];
-
-			for (int i = 0; i < settings.segments; i++)
-			{
-				float angle = i * Mathf.PI * 2 / settings.segments;
-				Vector3 offset = (transform.GetColumn(0).normalized * Mathf.Cos(angle) +
-								 transform.GetColumn(2).normalized * Mathf.Sin(angle)) * radius;
-				topCircle[i] = topCenter + offset;
-				bottomCircle[i] = bottomCenter + offset;
-			}
-
-			PathSettings pathSettings = new PathSettings
-			{
-				baseSettings = settings.baseSettings,
-				closed = true,
-			};
-
-			Path(topCircle, pathSettings);
-			Path(bottomCircle, pathSettings);
-
-			// Vertical lines
-			LineSettings lineSettings = new LineSettings
-			{
-				baseSettings = settings.baseSettings,
-			};
-
-			int step = Mathf.Max(1, settings.segments / 8);
-			for (int i = 0; i < settings.segments; i += step)
-			{
-				Line(topCircle[i], bottomCircle[i], lineSettings);
-			}
-		}
-
-		private static void DrawConeFilled(Matrix4x4 transform, ConeSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			var mat = settings.baseSettings.lit ? DrawMaterials.shadedMat : DrawMaterials.unlitMat;
-			VisualizationRenderFeature.DrawMesh(ConeMeshGenerator.GetIdentityMesh(), transform, mat, materialProperties);
-		}
-
-		private static void DrawConeOutline(Matrix4x4 transform, ConeSettings settings)
-		{
-			Vector3 center = transform.GetColumn(3);
-			Vector3 up = transform.GetColumn(1).normalized;
-			float radius = transform.lossyScale.x * settings.radius;
-			float height = transform.lossyScale.y * settings.height;
-
-			Vector3 apex = center + up * (height * 0.5f);
-			Vector3 baseCenter = center - up * (height * 0.5f);
-
-			Vector3[] baseCircle = new Vector3[settings.segments];
-			for (int i = 0; i < settings.segments; i++)
-			{
-				float angle = i * Mathf.PI * 2 / settings.segments;
-				Vector3 offset = (transform.GetColumn(0).normalized * Mathf.Cos(angle) +
-								 transform.GetColumn(2).normalized * Mathf.Sin(angle)) * radius;
-				baseCircle[i] = baseCenter + offset;
-			}
-
-			PathSettings pathSettings = new PathSettings
-			{
-				baseSettings = settings.baseSettings,
-				closed = true,
-			};
-
-			Path(baseCircle, pathSettings);
-
-			// Lines from apex to base
-			LineSettings lineSettings = new LineSettings
-			{
-				baseSettings = settings.baseSettings,
-			};
-
-			int step = Mathf.Max(1, settings.segments / 8);
-			for (int i = 0; i < settings.segments; i += step)
-			{
-				Line(apex, baseCircle[i], lineSettings);
-			}
-		}
-
-		private static void DrawTriangleFilled(Matrix4x4 transform, TriangleSettings settings)
-		{
-			if (settings.vertices.Length != 3) return;
-
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			materialProperties.SetVector(DrawMaterials.trianglePointA, settings.vertices[0]);
-			materialProperties.SetVector(DrawMaterials.trianglePointB, settings.vertices[1]);
-			materialProperties.SetVector(DrawMaterials.trianglePointC, settings.vertices[2]);
-			materialProperties.SetFloat(DrawMaterials.roundedEdgesID, settings.roundedCorners ? 1.0f : 0.0f);
-			materialProperties.SetFloat(DrawMaterials.roundRadiusID, settings.cornerRadius);
-
-			// No outline for filled mode
-			materialProperties.SetColor(DrawMaterials.outlineColorID, Color.clear);
-			materialProperties.SetFloat(DrawMaterials.outlineWidthID, 0.0f);
-			materialProperties.SetFloat(DrawMaterials.usePixelOutlineID, 0.0f);
-
-			VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), transform, DrawMaterials.triangleMat, materialProperties);
-		}
-
-		private static void DrawTriangleOutline(Matrix4x4 transform, TriangleSettings settings)
-		{
-			if (settings.vertices.Length != 3) return;
-
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-
-			// Set triangle vertices
-			materialProperties.SetVector(DrawMaterials.trianglePointA, settings.vertices[0]);
-			materialProperties.SetVector(DrawMaterials.trianglePointB, settings.vertices[1]);
-			materialProperties.SetVector(DrawMaterials.trianglePointC, settings.vertices[2]);
-			materialProperties.SetFloat(DrawMaterials.roundedEdgesID, settings.roundedCorners ? 1.0f : 0.0f);
-			materialProperties.SetFloat(DrawMaterials.roundRadiusID, settings.cornerRadius);
-
-			// Set outline properties
-			materialProperties.SetColor(DrawMaterials.outlineColorID, settings.baseSettings.color);
-			materialProperties.SetFloat(DrawMaterials.usePixelOutlineID, settings.baseSettings.drawMode == DrawMode.PixelOutline ? 1.0f : 0.0f);
-			materialProperties.SetFloat(DrawMaterials.outlineWidthID, settings.baseSettings.lineThickness);
-
-			// Make fill transparent for outline-only mode
-			materialProperties.SetColor(DrawMaterials.colorID, Color.clear);
-
-			VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), transform, DrawMaterials.triangleMat, materialProperties);
-		}
-
-		private static void DrawQuadFilled(Matrix4x4 transform, QuadSettings settings)
-		{
-			if (settings.vertices != null && settings.vertices.Length == 4)
-			{
-				materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-				materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-				materialProperties.SetVector(DrawMaterials.quadPointA, settings.vertices[0]);
-				materialProperties.SetVector(DrawMaterials.quadPointB, settings.vertices[1]);
-				materialProperties.SetVector(DrawMaterials.quadPointC, settings.vertices[2]);
-				materialProperties.SetVector(DrawMaterials.quadPointD, settings.vertices[3]);
-				VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), transform, DrawMaterials.quadMat, materialProperties);
-			}
-			else
-			{
-				// Use as a simple quad/plane
-				materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-				materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-				VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), transform, DrawMaterials.unlitMat, materialProperties);
-			}
-		}
-
-		private static void DrawQuadOutline(Matrix4x4 transform, QuadSettings settings)
-		{
-			Vector3[] worldVertices;
-
-			if (settings.vertices != null && settings.vertices.Length == 4)
-			{
-				worldVertices = new Vector3[4];
-				for (int i = 0; i < 4; i++)
-				{
-					worldVertices[i] = transform.MultiplyPoint3x4(settings.vertices[i]);
-				}
-			}
-			else
-			{
-				// Default quad corners
-				Vector3 center = transform.GetColumn(3);
-				Vector3 halfSize = transform.lossyScale * 0.5f;
-				Quaternion rotation = transform.rotation;
-
-				worldVertices = new Vector3[]
-				{
-					center + rotation * new Vector3(-halfSize.x, -halfSize.y, 0),
-					center + rotation * new Vector3( halfSize.x, -halfSize.y, 0),
-					center + rotation * new Vector3( halfSize.x,  halfSize.y, 0),
-					center + rotation * new Vector3(-halfSize.x,  halfSize.y, 0)
-				};
-			}
-
-			PathSettings pathSettings = new PathSettings
-			{
-				baseSettings = settings.baseSettings,
-				closed = true,
-			};
-
-			Path(worldVertices, pathSettings);
-		}
-
-		private static void DrawPolygonFilled(Matrix4x4 transform, PolygonSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			Mesh mesh = VisualizationRenderFeature.GetMesh();
-			PolygonMeshGenerator.GeneratePolygonMesh(mesh, settings.vertices);
-			VisualizationRenderFeature.DrawMesh(mesh, transform, DrawMaterials.unlitMat, materialProperties);
-		}
-
-		private static void DrawCircleFilled(Matrix4x4 transform, CircleSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			materialProperties.SetColor(DrawMaterials.outlineColorID, Color.clear);
-			materialProperties.SetFloat(DrawMaterials.outlineWidthID, 0.0f);
-			materialProperties.SetFloat(DrawMaterials.usePixelOutlineID, 0.0f);
-			transform *= Matrix4x4.Scale(new Vector3(2 * settings.radius, 2 * settings.radius, 1));
-			VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), transform, DrawMaterials.circleMat, materialProperties);
-		}
-
-		private static void DrawCircleOutline(Matrix4x4 transform, CircleSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, Color.clear);
-			materialProperties.SetColor(DrawMaterials.outlineColorID, settings.baseSettings.color);
-			materialProperties.SetFloat(DrawMaterials.outlineWidthID, settings.baseSettings.lineThickness);
-			materialProperties.SetFloat(DrawMaterials.usePixelOutlineID, settings.baseSettings.drawMode == DrawMode.PixelOutline ? 1.0f : 0.0f);
-			transform *= Matrix4x4.Scale(new Vector3(2 * settings.radius, 2 * settings.radius, 1));
-			VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), transform, DrawMaterials.circleMat, materialProperties);
-		}
-
-		private static void DrawPolygonOutline(Matrix4x4 transform, PolygonSettings settings)
-		{
-			Vector3[] worldVertices = new Vector3[settings.vertices.Length];
-			for (int i = 0; i < settings.vertices.Length; i++)
-			{
-				worldVertices[i] = transform.MultiplyPoint3x4(settings.vertices[i]);
-			}
-
-			PathSettings pathSettings = new PathSettings
-			{
-				baseSettings = settings.baseSettings,
-				closed = settings.closed,
-			};
-
-			Path(worldVertices, pathSettings);
-		}
-
-		private static void DrawLineThick(Matrix4x4 transform, LineSettings settings)
-		{
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			materialProperties.SetVector(DrawMaterials.sizeID, new Vector3(1, settings.baseSettings.lineThickness, 1));
-
-			// transform to get correct thickness
-			transform *= Matrix4x4.Scale(new Vector3(1, settings.baseSettings.lineThickness, 1));
-
-			Material mat = settings.roundedCaps ? DrawMaterials.lineMatRoundedEdge : DrawMaterials.lineMat;
-			VisualizationRenderFeature.DrawMesh(QuadMeshGenerator.GetQuadMesh(), transform, mat, materialProperties);
-		}
-
-		private static void DrawLinePixel(Matrix4x4 transform, LineSettings settings)
-		{
-			Vector3 start = transform.MultiplyPoint3x4(new Vector3(-0.5f, 0, 0));
-			Vector3 end = transform.MultiplyPoint3x4(new Vector3(0.5f, 0, 0));
-			end = Vector3.Lerp(start, end, settings.baseSettings.t);
-
-			materialProperties = VisualizationRenderFeature.GetNewMaterialProperties();
-			materialProperties.SetColor(DrawMaterials.colorID, settings.baseSettings.color);
-			materialProperties.SetVector(DrawMaterials.quadPointA, start);
-			materialProperties.SetVector(DrawMaterials.quadPointB, end);
-			VisualizationRenderFeature.DrawMesh(LineMeshGenerator.GetIdentityMesh(), Matrix4x4.identity, DrawMaterials.linePixelMat, materialProperties);
-		}
-
-		#endregion
-
-		#region Convenience Overloads
-
-		public static void Sphere(Vector3 center, float radius, Color color, bool lit = false)
-		{
-			Matrix4x4 transform = Matrix4x4.TRS(center, Quaternion.identity, Vector3.one * radius);
-			SphereSettings settings = SphereSettings.Default;
-			settings.baseSettings.color = color;
-			settings.baseSettings.lit = lit;
-			Sphere(transform, settings);
-		}
-
-		public static void Box(Vector3 center, Quaternion rotation, Vector3 size, Color color)
-		{
-			Matrix4x4 transform = Matrix4x4.TRS(center, rotation, size);
-			BoxSettings settings = BoxSettings.Default;
-			settings.baseSettings.color = color;
-			Box(transform, settings);
-		}
-
-		public static void Bounds(Bounds bounds, Color color, bool pixelLines = true)
-		{
-			Matrix4x4 transform = Matrix4x4.TRS(bounds.center, Quaternion.identity, bounds.size);
-			BoxSettings settings = BoxSettings.Default;
-			settings.baseSettings.color = color;
-			settings.baseSettings.drawMode = pixelLines ? DrawMode.PixelOutline : DrawMode.Outline;
-			Box(transform, settings);
-		}
-
-		public static void Cylinder(Vector3 center, Vector3 direction, float height, float radius, Color color)
-		{
-			Quaternion rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
-			Matrix4x4 transform = Matrix4x4.TRS(center, rotation, new Vector3(radius, height, radius));
-			CylinderSettings settings = CylinderSettings.Default;
-			settings.baseSettings.color = color;
-			Cylinder(transform, settings);
-		}
-
-		// cylinder from start to end
-		public static void Cylinder(Vector3 start, Vector3 end, CylinderSettings settings)
-		{
-			Vector3 direction = end - start;
-			float height = direction.magnitude;
-			if (height < float.Epsilon) return;
-
-			Quaternion rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
-			Matrix4x4 transform = Matrix4x4.TRS((start + end) * 0.5f, rotation, new Vector3(settings.radius, height, settings.radius));
-			Cylinder(transform, settings);
-		}
-
-		public static void Cone(Vector3 center, Vector3 direction, float height, float radius, Color color)
-		{
-			Quaternion rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
-			Matrix4x4 transform = Matrix4x4.TRS(center, rotation, new Vector3(radius, height, radius));
-			ConeSettings settings = ConeSettings.Default;
-			settings.baseSettings.color = color;
-			Cone(transform, settings);
-		}
-
-		public static void ArrowRay(Vector3 start, Vector3 direction, float length, ArrowSettings settings)
-		{
-			Arrow(start, start + direction.normalized * length, settings);
-		}
-
-		#endregion
-	}
+    #region Singleton
+    private static Draw instance;
+    public static Draw Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = FindFirstObjectByType<Draw>();
+                if (instance == null)
+                {
+                    GameObject go = new GameObject("ShapeManager");
+                    instance = go.AddComponent<Draw>();
+                }
+            }
+            return instance;
+        }
+    }
+    #endregion
+
+    #region Setup
+    [Header("Resources")]
+    public Material shapeMaterial;
+    public Mesh boundingCube;
+
+    [Header("Default Settings")]
+    public float defaultOutlineThickness = 0.02f;
+    public Color defaultOutlineColor = Color.black;
+    public bool defaultEnableLighting = true;
+    public float defaultSmoothness = 0.5f;
+    #endregion
+
+    #region Data Structures
+    public struct ShapeData
+    {
+        public int shapeType;
+        public Vector4 params1, params2, params3;
+        public Color fillColor, outlineColor;
+        public float outlineThickness, cornerRadius, extrusion;
+        public float enableLighting, smoothness;
+        public Matrix4x4 matrix;
+        public Vector3 scale;
+    }
+
+    private struct PersistentShape
+    {
+        public ShapeData data;
+        public float endTime;
+    }
+
+    private Dictionary<string, PersistentShape> persistentShapes = new Dictionary<string, PersistentShape>();
+    private List<ShapeData> immediateShapes = new List<ShapeData>();
+    #endregion
+
+    #region Lifecycle
+    void Awake()
+    {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+    }
+
+    void OnEnable()
+    {
+        if (shapeMaterial == null || boundingCube == null)
+        {
+            LoadDefaultResources();
+        }
+
+        if (!Application.isPlaying)
+        {
+            // UnityEditor.EditorApplication.update += DrawUpdate;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (!Application.isPlaying)
+        {
+            // UnityEditor.EditorApplication.update -= DrawUpdate;
+        }
+    }
+
+    void LoadDefaultResources()
+    {
+        // Try to find default cube mesh
+        GameObject temp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        boundingCube = temp.GetComponent<MeshFilter>().sharedMesh;
+        DestroyImmediate(temp);
+
+        // Try to find or create a default shape material
+        if (shapeMaterial == null)
+        {
+            shapeMaterial = new Material(Shader.Find("Standard"));
+            Debug.LogWarning("ShapeManager: No shape material assigned, using Standard shader");
+        }
+    }
+    #endregion
+
+    #region Public API
+    public void AddImmediateShape(ShapeData data)
+    {
+        immediateShapes.Add(data);
+    }
+
+    public void SetPersistentShape(string id, float duration, ShapeData data)
+    {
+        persistentShapes[id] = new PersistentShape
+        {
+            data = data,
+            endTime = Time.time + duration
+        };
+    }
+
+    public static void RemovePersistentShape(string id)
+    {
+        if (Instance != null)
+        {
+            Instance.persistentShapes.Remove(id);
+        }
+    }
+
+    public static void ClearAllPersistentShapes()
+    {
+        if (Instance != null)
+        {
+            Instance.persistentShapes.Clear();
+        }
+    }
+    #endregion
+
+    #region Static Drawing API
+    public static void Box(Vector3 position, Vector3 size, Color color, Quaternion? rotation = null, bool wireframe = false, float cornerRadius = 0f)
+    {
+        var data = new ShapeData
+        {
+            shapeType = (int)Shape.ShapeType.Box,
+            params1 = new Vector4(size.x * 0.5f, size.y * 0.5f, size.z * 0.5f, 0),
+            params2 = Vector4.zero,
+            params3 = Vector4.zero,
+            fillColor = color,
+            outlineColor = Instance.defaultOutlineColor,
+            outlineThickness = wireframe ? 0.015f : Instance.defaultOutlineThickness,
+            cornerRadius = cornerRadius,
+            extrusion = 0f,
+            enableLighting = Instance.defaultEnableLighting ? 1f : 0f,
+            smoothness = Instance.defaultSmoothness,
+            matrix = Matrix4x4.TRS(position, rotation ?? Quaternion.identity, size)
+        };
+        Instance.AddImmediateShape(data);
+    }
+
+    public static void Sphere(Vector3 position, float radius, Color color, Quaternion? rotation = null, bool wireframe = false)
+    {
+        Vector3 scale = Vector3.one * (radius * 2f);
+        var data = new ShapeData
+        {
+            shapeType = (int)Shape.ShapeType.Ellipsoid,
+            params1 = new Vector4(radius, radius, radius, 0),
+            params2 = Vector4.zero,
+            params3 = Vector4.zero,
+            fillColor = color,
+            outlineColor = Instance.defaultOutlineColor,
+            outlineThickness = wireframe ? 0.015f : Instance.defaultOutlineThickness,
+            cornerRadius = 0f,
+            extrusion = 0f,
+            enableLighting = Instance.defaultEnableLighting ? 1f : 0f,
+            smoothness = Instance.defaultSmoothness,
+            matrix = Matrix4x4.TRS(position, rotation ?? Quaternion.identity, scale)
+        };
+        Instance.AddImmediateShape(data);
+    }
+
+    public static void Cylinder(Vector3 start, Vector3 end, float radius, Color color, bool wireframe = false)
+    {
+        Vector3 center = (start + end) * 0.5f;
+        Vector3 direction = end - start;
+        float height = direction.magnitude;
+        
+        // Calculate rotation to align cylinder with start-end direction
+        Quaternion rotation = Quaternion.identity;
+        if (direction != Vector3.zero)
+        {
+            rotation = Quaternion.LookRotation(direction, Vector3.up);
+            rotation = rotation * Quaternion.Euler(90, 0, 0);
+        }
+        
+        // Scale to fit bounding box
+        Vector3 scale = new Vector3(radius * 2f, height, radius * 2f);
+        
+        // Convert to local space
+        Vector3 localStart = rotation * new Vector3(0, -height * 0.5f, 0);
+        Vector3 localEnd = rotation * new Vector3(0, height * 0.5f, 0);
+
+        var data = new ShapeData
+        {
+            shapeType = (int)Shape.ShapeType.Cylinder,
+            params1 = new Vector4(localStart.x, localStart.y, localStart.z, radius),
+            params2 = new Vector4(localEnd.x, localEnd.y, localEnd.z, 0),
+            params3 = Vector4.zero,
+            fillColor = color,
+            outlineColor = Instance.defaultOutlineColor,
+            outlineThickness = wireframe ? 0.015f : Instance.defaultOutlineThickness,
+            cornerRadius = 0f,
+            extrusion = 0f,
+            enableLighting = Instance.defaultEnableLighting ? 1f : 0f,
+            smoothness = Instance.defaultSmoothness,
+            matrix = Matrix4x4.TRS(center, rotation, scale)
+        };
+        Instance.AddImmediateShape(data);
+    }
+
+    public static void Line(Vector3 start, Vector3 end, float thickness, Color color)
+    {
+        Vector3 center = (start + end) * 0.5f;
+        Vector3 direction = end - start;
+        float length = direction.magnitude;
+        
+        // Calculate bounding box that encompasses the capsule
+        Vector3 scale = new Vector3(thickness * 2f, length + thickness * 2f, thickness * 2f);
+        
+        // Calculate rotation
+        Quaternion rotation = Quaternion.identity;
+        if (direction != Vector3.zero)
+        {
+            rotation = Quaternion.LookRotation(direction, Vector3.up);
+            rotation = rotation * Quaternion.Euler(90, 0, 0);
+        }
+        
+        // Convert to local space
+        Vector3 localStart = rotation * new Vector3(0, -length * 0.5f, 0);
+        Vector3 localEnd = rotation * new Vector3(0, length * 0.5f, 0);
+
+        var data = new ShapeData
+        {
+            shapeType = (int)Shape.ShapeType.Capsule,
+            params1 = new Vector4(localStart.x, localStart.y, localStart.z, thickness),
+            params2 = new Vector4(localEnd.x, localEnd.y, localEnd.z, 0),
+            params3 = new Vector4(0, 0, 1, 0),
+            fillColor = color,
+            outlineColor = Instance.defaultOutlineColor,
+            outlineThickness = Instance.defaultOutlineThickness,
+            cornerRadius = 0f,
+            extrusion = 0f,
+            enableLighting = Instance.defaultEnableLighting ? 1f : 0f,
+            smoothness = Instance.defaultSmoothness,
+            matrix = Matrix4x4.TRS(center, rotation, scale)
+        };
+        Instance.AddImmediateShape(data);
+    }
+
+    public static void Arrow(Vector3 start, Vector3 end, float shaftRadius, float headRadius, float headLength, Color color)
+    {
+        // Calculate bounding box for the entire arrow
+        Vector3 min = Vector3.Min(start, end);
+        Vector3 max = Vector3.Max(start, end);
+        float maxRadius = Mathf.Max(shaftRadius, headRadius);
+        Vector3 size = (max - min) + Vector3.one * maxRadius * 2f;
+        Vector3 center = (min + max) * 0.5f;
+        
+        var data = new ShapeData
+        {
+            shapeType = (int)Shape.ShapeType.Arrow,
+            params1 = new Vector4(start.x, start.y, start.z, shaftRadius),
+            params2 = new Vector4(end.x, end.y, end.z, headRadius),
+            params3 = new Vector4(headLength, 0, 0, 0),
+            fillColor = color,
+            outlineColor = Instance.defaultOutlineColor,
+            outlineThickness = Instance.defaultOutlineThickness,
+            cornerRadius = 0f,
+            extrusion = 0f,
+            enableLighting = Instance.defaultEnableLighting ? 1f : 0f,
+            smoothness = Instance.defaultSmoothness,
+            matrix = Matrix4x4.TRS(center, Quaternion.identity, size)
+        };
+        Instance.AddImmediateShape(data);
+    }
+
+    public static void Arrow(Vector3 start, Vector3 end, Color color)
+    {
+        float totalLength = Vector3.Distance(start, end);
+        float headLength = Mathf.Min(0.2f * totalLength, 0.3f);
+        float shaftRadius = 0.02f * totalLength;
+        float headRadius = 2f * shaftRadius;
+        Arrow(start, end, shaftRadius, headRadius, headLength, color);
+    }
+
+    public static void ArrowRay(Vector3 origin, Vector3 direction, float length, Color color, float shaftRadius, float headRadius, float headLength)
+    {
+        Vector3 end = origin + direction.normalized * length;
+        Arrow(origin, end, shaftRadius, headRadius, headLength, color);
+    }
+
+    public static void ArrowRay(Vector3 origin, Vector3 direction, float length, Color color)
+    {
+        Vector3 end = origin + direction.normalized * length;
+        Arrow(origin, end, color);
+    }
+
+    public static void ArrowRay(Ray ray, float length, Color color)
+    {
+        Vector3 end = ray.origin + ray.direction.normalized * length;
+        Arrow(ray.origin, end, color);
+    }
+
+    public static void CoordinateFrame(Vector3 position, Quaternion rotation, float scale = 1.0f, float axisRadius = 0.01f, float axisHeadRadius = 0.02f, float axisHeadLength = 0.05f)
+    {
+        Vector3 right = rotation * Vector3.right;
+        Vector3 up = rotation * Vector3.up;
+        Vector3 forward = rotation * Vector3.forward;
+
+        Arrow(position, position + right * scale, axisRadius, axisHeadRadius, axisHeadLength, Color.red);
+        Arrow(position, position + up * scale, axisRadius, axisHeadRadius, axisHeadLength, Color.green);
+        Arrow(position, position + forward * scale, axisRadius, axisHeadRadius, axisHeadLength, Color.blue);
+    }
+
+    public static void CoordinateFrame(Matrix4x4 matrix, float scale = 1.0f, float axisRadius = 0.01f, float axisHeadRadius = 0.02f, float axisHeadLength = 0.05f)
+    {
+        Vector3 position = matrix.GetColumn(3);
+        Quaternion rotation = Quaternion.LookRotation(matrix.GetColumn(2), matrix.GetColumn(1));
+        CoordinateFrame(position, rotation, scale, axisRadius, axisHeadRadius, axisHeadLength);
+    }
+
+    #endregion
+
+    #region Rendering
+    void DrawUpdate()
+    {
+        // Clean up expired persistent shapes
+        List<string> toRemove = new List<string>();
+        foreach (var kvp in persistentShapes)
+        {
+            if (Time.time > kvp.Value.endTime)
+            {
+                toRemove.Add(kvp.Key);
+            }
+        }
+        foreach (var key in toRemove)
+        {
+            persistentShapes.Remove(key);
+        }
+
+        // Render all shapes
+        RenderShapes();
+
+        // Clear immediate shapes after rendering
+        immediateShapes.Clear();
+    }
+
+    void LateUpdate()
+    {
+        DrawUpdate();
+    }
+
+    void RenderShapes()
+    {
+        var allShapes = new List<ShapeData>(immediateShapes);
+        foreach (var kvp in persistentShapes)
+        {
+            allShapes.Add(kvp.Value.data);
+        }
+
+        if (allShapes.Count == 0) return;
+
+        // Expand composite shapes (like arrows) into their component shapes
+        var expandedShapes = ExpandCompositeShapes(allShapes);
+
+        // Draw in batches of 1023 (Unity's limit)
+        for (int batchStart = 0; batchStart < expandedShapes.Count; batchStart += 1023)
+        {
+            int batchSize = Mathf.Min(1023, expandedShapes.Count - batchStart);
+
+            var batchPropertyBlock = new MaterialPropertyBlock();
+
+            Matrix4x4[] matrices = new Matrix4x4[batchSize];
+            float[] shapeTypes = new float[batchSize];
+            Vector4[] params1 = new Vector4[batchSize];
+            Vector4[] params2 = new Vector4[batchSize];
+            Vector4[] params3 = new Vector4[batchSize];
+            Vector4[] fillColors = new Vector4[batchSize];
+            Vector4[] outlineColors = new Vector4[batchSize];
+            float[] outlineThickness = new float[batchSize];
+            float[] cornerRadius = new float[batchSize];
+            float[] extrusion = new float[batchSize];
+            float[] lightingEnabled = new float[batchSize];
+            float[] smoothnessArray = new float[batchSize];
+
+            for (int i = 0; i < batchSize; i++)
+            {
+                var data = expandedShapes[batchStart + i];
+                matrices[i] = data.matrix * Matrix4x4.Scale(Vector3.one * 1.01f);
+                shapeTypes[i] = data.shapeType;
+                params1[i] = data.params1;
+                params2[i] = data.params2;
+                params3[i] = data.params3;
+                fillColors[i] = data.fillColor;
+                outlineColors[i] = data.outlineColor;
+                outlineThickness[i] = data.outlineThickness;
+                cornerRadius[i] = data.cornerRadius;
+                extrusion[i] = data.extrusion;
+                lightingEnabled[i] = data.enableLighting;
+                smoothnessArray[i] = data.smoothness;
+            }
+
+            batchPropertyBlock.SetFloatArray("_ShapeType", shapeTypes);
+            batchPropertyBlock.SetVectorArray("_ShapeParams1", params1);
+            batchPropertyBlock.SetVectorArray("_ShapeParams2", params2);
+            batchPropertyBlock.SetVectorArray("_ShapeParams3", params3);
+            batchPropertyBlock.SetVectorArray("_FillColor", fillColors);
+            batchPropertyBlock.SetVectorArray("_OutlineColor", outlineColors);
+            batchPropertyBlock.SetFloatArray("_OutlineThickness", outlineThickness);
+            batchPropertyBlock.SetFloatArray("_CornerRadius", cornerRadius);
+            batchPropertyBlock.SetFloatArray("_Extrusion", extrusion);
+            batchPropertyBlock.SetFloatArray("_EnableLighting", lightingEnabled);
+            batchPropertyBlock.SetFloatArray("_Smoothness", smoothnessArray);
+
+            Graphics.DrawMeshInstanced(boundingCube, 0, shapeMaterial, matrices, batchSize, batchPropertyBlock);
+        }
+    }
+    #endregion
+
+    #region Composite Expansion
+    private List<ShapeData> ExpandCompositeShapes(List<ShapeData> shapes)
+    {
+        var expandedShapes = new List<ShapeData>();
+
+        for (int i = 0; i < shapes.Count; i++)
+        {
+            var shape = shapes[i];
+            if (shape.shapeType == (int)Shape.ShapeType.Arrow)
+            {
+                // Extract arrow parameters
+                Vector3 start = new Vector3(shape.params1.x, shape.params1.y, shape.params1.z);
+                float shaftRadius = shape.params1.w;
+                Vector3 end = new Vector3(shape.params2.x, shape.params2.y, shape.params2.z);
+                float headRadius = shape.params2.w;
+                float headLength = shape.params3.x;
+
+                // Calculate shaft end point
+                Vector3 direction = (end - start).normalized;
+                float totalLength = Vector3.Distance(start, end);
+                float shaftLength = Mathf.Max(0, totalLength - headLength);
+                Vector3 shaftEnd = start + direction * shaftLength;
+                Vector3 headBase = shaftEnd;
+
+                // Create cylinder for shaft
+                Vector3 shaftCenter = (start + shaftEnd) * 0.5f;
+                Vector3 shaftDir = shaftEnd - start;
+                float shaftHeight = shaftDir.magnitude;
+                
+                Quaternion shaftRotation = Quaternion.identity;
+                if (shaftDir != Vector3.zero)
+                {
+                    shaftRotation = Quaternion.LookRotation(shaftDir, Vector3.up);
+                    shaftRotation = shaftRotation * Quaternion.Euler(90, 0, 0);
+                }
+                
+                Vector3 shaftScale = new Vector3(shaftRadius * 2f, shaftHeight, shaftRadius * 2f);
+                Vector3 localShaftStart = shaftRotation * new Vector3(0, -shaftHeight * 0.5f, 0);
+                Vector3 localShaftEnd = shaftRotation * new Vector3(0, shaftHeight * 0.5f, 0);
+                
+                var shaftData = shape;
+                shaftData.shapeType = (int)Shape.ShapeType.Cylinder;
+                shaftData.params1 = new Vector4(localShaftStart.x, localShaftStart.y, localShaftStart.z, shaftRadius);
+                shaftData.params2 = new Vector4(localShaftEnd.x, localShaftEnd.y, localShaftEnd.z, 0);
+                shaftData.matrix = Matrix4x4.TRS(shaftCenter, shaftRotation, shaftScale);
+                expandedShapes.Add(shaftData);
+
+                // Create cone for head
+                Vector3 headCenter = (headBase + end) * 0.5f;
+                Vector3 headDir = end - headBase;
+                float headHeight = headDir.magnitude;
+                
+                Quaternion headRotation = Quaternion.identity;
+                if (headDir != Vector3.zero)
+                {
+                    headRotation = Quaternion.LookRotation(headDir, Vector3.up);
+                    headRotation = headRotation * Quaternion.Euler(90, 0, 0);
+                }
+                
+                Vector3 headScale = new Vector3(headRadius * 2f, headHeight, headRadius * 2f);
+                Vector3 localHeadBase = headRotation * new Vector3(0, -headHeight * 0.5f, 0);
+                Vector3 localHeadTip = headRotation * new Vector3(0, headHeight * 0.5f, 0);
+                
+                var headData = shape;
+                headData.shapeType = (int)Shape.ShapeType.Cone;
+                headData.params1 = new Vector4(localHeadBase.x, localHeadBase.y, localHeadBase.z, headRadius);
+                headData.params2 = new Vector4(localHeadTip.x, localHeadTip.y, localHeadTip.z, 0);
+                headData.matrix = Matrix4x4.TRS(headCenter, headRotation, headScale);
+                expandedShapes.Add(headData);
+            }
+            else
+            {
+                expandedShapes.Add(shape);
+            }
+        }
+
+        return expandedShapes;
+    }
+
+    #endregion
 }
