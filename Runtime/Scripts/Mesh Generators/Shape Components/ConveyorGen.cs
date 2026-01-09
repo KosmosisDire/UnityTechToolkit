@@ -66,7 +66,7 @@ public class ConveyorGen : MonoBehaviour
     {
         InitializeComponents();
     }
-    
+
     void Start()
     {
         InitializeComponents();
@@ -91,16 +91,20 @@ public class ConveyorGen : MonoBehaviour
     {
         // Initialize components if needed
         InitializeComponents();
-        
-        // Always regenerate in editor when values change
-        if (!Application.isPlaying || autoUpdate)
+
+        EditorApplication.delayCall += () =>
         {
-            if (HasParametersChanged())
+            Debug.Log("OnValidate called for ConveyorGen on " + gameObject.name);
+            // Always regenerate in editor when values change
+            if (!Application.isPlaying || autoUpdate)
             {
-                GenerateMesh();
-                StoreCurrentValues();
+                if (HasParametersChanged())
+                {
+                    GenerateMesh();
+                    StoreCurrentValues();
+                }
             }
-        }
+        };
     }
     
     private void InitializeComponents()
@@ -175,11 +179,13 @@ public class ConveyorGen : MonoBehaviour
                 DestroyImmediate(generatedMesh);
             }
         }
-        
+
         // Create new mesh
-        generatedMesh = new Mesh();
-        generatedMesh.name = conveyorMode == ConveyorMode.Pill ? "Generated Pill Conveyor" : "Generated Roller Conveyor";
-        
+        generatedMesh = new()
+        {
+            name = conveyorMode == ConveyorMode.Pill ? "Generated Pill Conveyor" : "Generated Roller Conveyor"
+        };
+
         // Generate the mesh data based on mode
         if (conveyorMode == ConveyorMode.Pill)
         {
@@ -194,18 +200,7 @@ public class ConveyorGen : MonoBehaviour
         if (meshFilter != null)
         {
             meshFilter.sharedMesh = generatedMesh;
-            
-            // Update mesh collider if present
             UpdateMeshCollider();
-            
-#if UNITY_EDITOR
-            // Mark the scene as dirty in editor
-            if (!Application.isPlaying)
-            {
-                EditorUtility.SetDirty(this);
-                EditorUtility.SetDirty(meshFilter);
-            }
-#endif
         }
     }
     

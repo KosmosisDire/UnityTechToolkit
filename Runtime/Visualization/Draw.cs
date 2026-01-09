@@ -100,8 +100,7 @@ public class Draw : MonoBehaviour
         // Try to find or create a default shape material
         if (shapeMaterial == null)
         {
-            shapeMaterial = new Material(Shader.Find("Standard"));
-            Debug.LogWarning("ShapeManager: No shape material assigned, using Standard shader");
+            Debug.LogError("ShapeManager: No shape material assigned, using Standard shader");
         }
     }
     #endregion
@@ -196,10 +195,10 @@ public class Draw : MonoBehaviour
         
         // Scale to fit bounding box
         Vector3 scale = new Vector3(radius * 2f, height, radius * 2f);
-        
+
         // Convert to local space
-        Vector3 localStart = rotation * new Vector3(0, -height * 0.5f, 0);
-        Vector3 localEnd = rotation * new Vector3(0, height * 0.5f, 0);
+        Vector3 localStart = new Vector3(0, -height * 0.5f, 0);
+        Vector3 localEnd = new Vector3(0, height * 0.5f, 0);
 
         var data = new ShapeData
         {
@@ -227,7 +226,7 @@ public class Draw : MonoBehaviour
         
         // Calculate bounding box that encompasses the capsule
         Vector3 scale = new Vector3(thickness * 2f, length + thickness * 2f, thickness * 2f);
-        
+
         // Calculate rotation
         Quaternion rotation = Quaternion.identity;
         if (direction != Vector3.zero)
@@ -235,10 +234,10 @@ public class Draw : MonoBehaviour
             rotation = Quaternion.LookRotation(direction, Vector3.up);
             rotation = rotation * Quaternion.Euler(90, 0, 0);
         }
-        
+
         // Convert to local space
-        Vector3 localStart = rotation * new Vector3(0, -length * 0.5f, 0);
-        Vector3 localEnd = rotation * new Vector3(0, length * 0.5f, 0);
+        Vector3 localStart = new Vector3(0, -length * 0.5f, 0);
+        Vector3 localEnd = new Vector3(0, length * 0.5f, 0);
 
         var data = new ShapeData
         {
@@ -363,6 +362,12 @@ public class Draw : MonoBehaviour
 
     void RenderShapes()
     {
+        if (shapeMaterial == null || boundingCube == null)
+        {
+            Debug.LogError("ShapeManager: Missing shape material or bounding cube mesh");
+            return;
+        }
+
         var allShapes = new List<ShapeData>(immediateShapes);
         foreach (var kvp in persistentShapes)
         {
@@ -465,9 +470,9 @@ public class Draw : MonoBehaviour
                 }
                 
                 Vector3 shaftScale = new Vector3(shaftRadius * 2f, shaftHeight, shaftRadius * 2f);
-                Vector3 localShaftStart = shaftRotation * new Vector3(0, -shaftHeight * 0.5f, 0);
-                Vector3 localShaftEnd = shaftRotation * new Vector3(0, shaftHeight * 0.5f, 0);
-                
+                Vector3 localShaftStart = new Vector3(0, -shaftHeight * 0.5f, 0);
+                Vector3 localShaftEnd = new Vector3(0, shaftHeight * 0.5f, 0);
+
                 var shaftData = shape;
                 shaftData.shapeType = (int)Shape.ShapeType.Cylinder;
                 shaftData.params1 = new Vector4(localShaftStart.x, localShaftStart.y, localShaftStart.z, shaftRadius);
@@ -479,17 +484,17 @@ public class Draw : MonoBehaviour
                 Vector3 headCenter = (headBase + end) * 0.5f;
                 Vector3 headDir = end - headBase;
                 float headHeight = headDir.magnitude;
-                
+
                 Quaternion headRotation = Quaternion.identity;
                 if (headDir != Vector3.zero)
                 {
                     headRotation = Quaternion.LookRotation(headDir, Vector3.up);
                     headRotation = headRotation * Quaternion.Euler(90, 0, 0);
                 }
-                
+
                 Vector3 headScale = new Vector3(headRadius * 2f, headHeight, headRadius * 2f);
-                Vector3 localHeadBase = headRotation * new Vector3(0, -headHeight * 0.5f, 0);
-                Vector3 localHeadTip = headRotation * new Vector3(0, headHeight * 0.5f, 0);
+                Vector3 localHeadBase = new Vector3(0, -headHeight * 0.5f, 0);
+                Vector3 localHeadTip = new Vector3(0, headHeight * 0.5f, 0);
                 
                 var headData = shape;
                 headData.shapeType = (int)Shape.ShapeType.Cone;
